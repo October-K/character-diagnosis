@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="description" content="あなたと相性のいいキャラ診断。12の質問から、相性のいいキャラと貴方に似ているキャラを診断します。" />
+<meta name="theme-color" content="#0b1020" />
+<title>あなたと相性のいいキャラ診断</title>
+<style>
+:root{
+  --bg:#0b1020;
+  --panel:#121a30;
+  --line:rgba(255,255,255,.14);
+  --text:#f6f7fb;
+  --muted:#b9c1d9;
+  --gold:#f1d78a;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; color:var(--text);
+  font-family:"Yu Gothic","Hiragino Kaku Gothic ProN",system-ui,sans-serif;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(95,120,255,.17), transparent 28%),
+    radial-gradient(circle at 80% 75%, rgba(240,177,255,.11), transparent 26%),
+    linear-gradient(180deg,#080c18,#10152a 55%,#070a13);
+  overflow-x:hidden;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; opacity:.45;
+  background-image:
+    radial-gradient(circle,white 1px,transparent 1px),
+    radial-gradient(circle,white 1px,transparent 1px);
+  background-size:55px 55px, 91px 91px;
+  background-position:0 0,20px 15px;
+}
+.wrap{width:min(920px,92vw);margin:0 auto;padding:46px 0 70px}
+.hero{text-align:center;margin-bottom:28px}
+.kicker{letter-spacing:.25em;color:var(--gold);font-size:.78rem}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:500;font-size:clamp(2rem,5vw,4.2rem);margin:.15em 0}
+.sub{color:var(--muted);line-height:1.8}
+.panel{
+  background:linear-gradient(180deg,rgba(20,29,52,.92),rgba(12,18,35,.9));
+  border:1px solid var(--line); border-radius:24px; padding:24px;
+  box-shadow:0 22px 70px rgba(0,0,0,.38); backdrop-filter:blur(12px);
+}
+.progress{display:flex;gap:8px;margin-bottom:20px}
+.progress span{height:4px;flex:1;border-radius:20px;background:rgba(255,255,255,.1)}
+.progress span.on{background:linear-gradient(90deg,#f6df9b,#d0b760)}
+.qnum{font-size:.78rem;color:var(--gold);letter-spacing:.14em}
+.question{font-size:1.35rem;line-height:1.6;margin:8px 0 20px}
+.choices{display:grid;gap:12px}
+.choice{
+  width:100%;text-align:left;border:1px solid var(--line);color:var(--text);
+  background:rgba(255,255,255,.045);padding:15px 17px;border-radius:15px;
+  cursor:pointer;font-size:1rem;transition:.2s transform,.2s background,.2s border;
+}
+.choice:hover{transform:translateY(-2px);background:rgba(255,255,255,.085);border-color:rgba(241,215,138,.5)}
+.hidden{display:none!important}
+.center{text-align:center}
+.summon{
+  position:relative;width:210px;height:210px;margin:22px auto 8px;border-radius:50%;
+  display:grid;place-items:center;
+}
+.summon::before,.summon::after{
+  content:"";position:absolute;border:1px solid rgba(241,215,138,.55);border-radius:50%;
+  animation:spin 7s linear infinite;
+}
+.summon::before{inset:12px}
+.summon::after{inset:35px;border-style:dashed;animation-direction:reverse;animation-duration:4s}
+.orb{
+  width:90px;height:90px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff7d0,#e2bd55 18%,#89651d 54%,#1c1520 75%);
+  box-shadow:0 0 25px #f2d170,0 0 80px rgba(231,190,77,.45);
+  animation:pulse 1.4s ease-in-out infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{50%{transform:scale(1.09);filter:brightness(1.22)}}
+.card{
+  margin-top:18px;border-radius:28px;padding:28px;position:relative;overflow:hidden;
+  border:1px solid rgba(255,255,255,.17);
+  background:
+    radial-gradient(circle at 50% -10%, rgba(255,255,255,.18),transparent 35%),
+    linear-gradient(160deg,var(--c1),var(--c2));
+  box-shadow:0 28px 90px rgba(0,0,0,.42);
+}
+.card::after{content:"";position:absolute;inset:-40%;background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.16),transparent 65%);transform:rotate(12deg);animation:shine 4s linear infinite}
+@keyframes shine{from{translate:-50% 0}to{translate:50% 0}}
+.region{position:relative;z-index:1;font-size:.78rem;letter-spacing:.2em;color:rgba(255,255,255,.76)}
+.name{position:relative;z-index:1;font-family:Georgia,serif;font-size:clamp(2.2rem,7vw,4.4rem);margin:.05em 0}
+.epithet{position:relative;z-index:1;color:#fff9dc;margin-bottom:22px}
+.result-label{
+  position:relative;z-index:1;
+  display:inline-block;margin:0 auto 6px;padding:6px 12px;border-radius:999px;
+  background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.2);
+  font-size:.72rem;letter-spacing:.18em;color:#fff3b7
+}
+.result-name{
+  position:relative;z-index:1;
+  font-family:Georgia,"Yu Mincho",serif;
+  font-size:clamp(2.8rem,8vw,5.2rem);
+  font-weight:700;line-height:1.05;margin:.08em 0 .12em;
+  text-shadow:0 3px 18px rgba(0,0,0,.34)
+}
+.compat{position:relative;z-index:1;font-size:.9rem;letter-spacing:.1em;color:#fff3b7}
+.score{position:relative;z-index:1;font-size:2rem;margin:5px 0 14px}
+.desc{position:relative;z-index:1;line-height:1.9;color:rgba(255,255,255,.92);max-width:720px;margin:auto}
+.reason{position:relative;z-index:1;margin-top:18px;padding:14px 16px;border-radius:14px;background:rgba(0,0,0,.18);line-height:1.75}
+.similar-box{
+  position:relative;z-index:1;
+  margin-top:20px;padding:18px;border-radius:16px;
+  background:rgba(0,0,0,.20);border:1px solid rgba(255,255,255,.16);
+  text-align:left
+}
+.similar-label{font-size:.76rem;letter-spacing:.15em;color:#fff3b7;margin-bottom:6px}
+.similar-name{font-size:1.55rem;font-weight:700;margin-bottom:8px}
+.similar-desc{line-height:1.75;color:rgba(255,255,255,.9)}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.btn{
+  border:1px solid var(--line);background:#f3d985;color:#1a1830;font-weight:700;
+  padding:13px 18px;border-radius:999px;cursor:pointer
+}
+.btn.secondary{background:rgba(255,255,255,.06);color:white}
+.note{font-size:.82rem;color:var(--muted);margin-top:16px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="kicker">CHARACTER COMPATIBILITY</div>
+    <h1>あなたと相性のいいキャラ診断</h1>
+    <div class="sub">12の質問から、「相手に求めるもの」と「あなたが相手に与えられるもの」の両方を見て、相性のいい人物を診断します。</div>
+  </header>
+
+  <section id="quiz" class="panel">
+    <div id="progress" class="progress"></div>
+    <div class="qnum" id="qnum"></div>
+    <div class="question" id="question"></div>
+    <div class="choices" id="choices"></div>
+  </section>
+
+  <section id="summoning" class="panel hidden center">
+    <div class="kicker">SUMMONING...</div>
+    <div class="summon"><div class="orb"></div></div>
+    <p class="sub">あなたの選択を読み取っています。</p>
+  </section>
+
+  <section id="result" class="hidden">
+    <div id="resultCard" class="card">
+      <div class="region" id="region"></div>
+      <div class="result-label">YOUR BEST MATCH</div>
+      <div class="result-name" id="name"></div>
+      <div class="epithet" id="epithet"></div>
+      <div class="compat">COMPATIBILITY</div>
+      <div class="score" id="score"></div>
+      <div class="desc" id="desc"></div>
+      <div class="reason" id="reason"></div>
+      <div class="similar-box">
+        <div class="similar-label">MOST LIKE YOU</div>
+        <div class="similar-name" id="similarName"></div>
+        <div class="similar-desc" id="similarDesc"></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="restartBtn" type="button">もう一度診断する</button>
+        <button class="btn secondary" id="copyBtn" type="button">結果をコピー</button>
+      </div>
+    </div>
+    <div class="note">※診断結果は作品世界を楽しむためのファンコンテンツです。</div>
+  </section>
+</div>
+
+<script>
+
+function makeAvatar(hair, eye, accent, vibe="soft"){
+  const hairPath = vibe==="spiky"
+    ? "M26 67 Q20 20 60 18 Q91 18 96 67 L85 52 L80 72 L68 50 L60 72 L47 51 L38 69 Z"
+    : vibe==="long"
+    ? "M24 66 Q22 18 60 17 Q98 18 96 68 L91 112 L76 98 L44 98 L29 112 Z"
+    : "M25 66 Q22 20 60 18 Q94 20 95 67 L84 55 Q76 42 60 43 Q43 42 34 56 Z";
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+    <defs>
+      <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0" stop-color="${accent}" stop-opacity=".92"/>
+        <stop offset="1" stop-color="#12182c"/>
+      </linearGradient>
+    </defs>
+    <rect width="120" height="120" fill="url(#bg)"/>
+    <circle cx="60" cy="50" r="31" fill="#f2cdb3"/>
+    <path d="${hairPath}" fill="${hair}"/>
+    <ellipse cx="48" cy="53" rx="3.5" ry="5" fill="${eye}"/>
+    <ellipse cx="72" cy="53" rx="3.5" ry="5" fill="${eye}"/>
+    <path d="M53 68 Q60 72 67 68" fill="none" stroke="#a66f65" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M28 120 Q31 84 60 84 Q89 84 92 120" fill="${accent}"/>
+    <circle cx="60" cy="91" r="4" fill="rgba(255,255,255,.65)"/>
+  </svg>`;
+  return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
+const chars = {
+  orange:{name:"オレンジ",region:"KANTO",epithet:"相手の理想に寄り添う、つかみどころのない優しさ",avatar:makeAvatar("#d88942","#6b4b37","#d57f33","soft"),c1:"#b06028",c2:"#4e2b22",
+    desc:"あなたは、オレンジの『相手に合わせる優しさ』をただ享受するだけでなく、その奥にいる本人にも目を向けられそうです。踏み込みすぎず、それでも『あなたはどうしたい？』と尋ねられる関係なら、彼女にとってもあなたにとっても息のしやすい特別さが生まれそうです。"},
+  kyanite:{name:"カイヤナイト",region:"KANTO",epithet:"努力を隠して前へ進む頑張り屋",avatar:makeAvatar("#314f88","#335f99","#4c73bc","spiky"),c1:"#355c9a",c2:"#182744",
+    desc:"あなたは、カイヤナイトの強がりの奥にある努力や不安を見落とさず、寄り添いながら背中を押せるタイプ。共感だけでも指導だけでもなく、『頑張っていることを認めたうえで一緒に進む』関係がよく噛み合いそうです。"},
+  turquoise:{name:"ターコイズ",region:"KANTO",epithet:"理性で繊細さを覆う分析家",avatar:makeAvatar("#5aaeb4","#2f6f78","#4e9aa1","soft"),c1:"#348b95",c2:"#173840",
+    desc:"あなたは、筋の通った行動や適度な距離を大切にしつつ、理屈の奥に隠された繊細さにも付き合えそうです。ターコイズの境界を乱暴に越えず、必要なときだけ優しく深いところまで届く関係が向いています。"},
+  coral:{name:"コーラル",region:"JOHTO",epithet:"感情に敏感な、まっすぐな共感者",avatar:makeAvatar("#d66f75","#8f414a","#d36c72","long"),c1:"#c66c69",c2:"#552c36",
+    desc:"あなたは、裏表のないやり取りや感情の正直さを大切にするタイプ。人の感情に強く影響されるコーラルにとって、気持ちを隠さず、それでいて無茶や攻撃性を持ち込まないあなたは安心して向き合いやすい相手になりそうです。"},
+  quartz:{name:"クォーツ",region:"JOHTO",epithet:"退屈を嫌う、性悪な観察者",avatar:makeAvatar("#d4d0df","#5f5c72","#8f89a5","soft"),c1:"#8b86a3",c2:"#39354e",
+    desc:"あなたは、クォーツの悪趣味な冗談や挑発に必要以上に振り回されず、それでも退屈させない何かを持っていそうです。正論で矯正しようとするより、適度に受け流し、ときにはやり返せるくらいの強さがあるほど長く付き合えそうです。"},
+  charoite:{name:"チャロアイト",region:"HOUEN",epithet:"つながりを離したくない寂しがり",avatar:makeAvatar("#6d4f99","#5b437c","#775ab1","long"),c1:"#7656a8",c2:"#2b214a",
+    desc:"あなたは、チャロアイトが求める『見捨てないこと』を言葉や時間で示せる人。近さや甘えを受け止めつつ、共倒れにならない程度の安定感も持てるなら、彼にとって非常に大きな安心になりそうです。"},
+  peridot:{name:"ペリドット",region:"HOUEN",epithet:"料理と現実感で支える世話焼き",avatar:makeAvatar("#77984d","#466330","#78a450","spiky"),c1:"#6f9b4c",c2:"#2d4527",
+    desc:"あなたは、感情を素直に伝え、無茶をせず、相手からの世話も素直に受け取れるタイプ。慰めるだけで終わらず現実へ戻してくれるペリドットとは、穏やかな時間を共有しながら互いを生活面でも支えられそうです。"},
+  tourmaline:{name:"トルマリン",region:"SINNOH",epithet:"価値と対話を重んじる現実主義者",avatar:makeAvatar("#8a3c64","#73324f","#a95079","long"),c1:"#a45178",c2:"#4a2037",
+    desc:"あなたは、自分の足で立ち、対話や能力を通じて信頼を積み上げられるタイプ。トルマリンの現実的な物の見方を怖がらず、彼が守りたいものを尊重できれば、互いの強みを利用ではなく信頼として交換できそうです。"},
+  adularia:{name:"アデュレリア",region:"SINNOH",epithet:"穏やかな世界を守るパティシエ",avatar:makeAvatar("#d7dbea","#657095","#8b95b9","soft"),c1:"#8a93b7",c2:"#2d344f",
+    desc:"あなたは、アデュレリアの好きな世界や習慣を壊さず、その中で安心して頼れる存在になれそうです。肯定し、必要なときには率いてくれる相手を求める彼女とは、近い距離で一緒に何かを作る関係がよく似合います。"},
+  cornelpin:{name:"コーネルピン",region:"SINNOH",epithet:"平穏を装う、お人好しの刺激好き",avatar:makeAvatar("#7b5438","#62432e","#a86d43","spiky"),c1:"#9b633b",c2:"#4a2d22",
+    desc:"あなたは、誠実さと自立を保ちながら、ときどき訪れる刺激も楽しめるタイプ。コーネルピンを誰かの代わりとして見ず、穏やかなお人好しと隠れたアドレナリン・ジャンキーの両方を本人として受け止められるなら、かなり噛み合いそうです。"}
+};
+
+
+const similarityProfiles = {
+  orange:{name:"オレンジ",desc:"周囲に合わせる力が強く、自分の希望より相手の望みを優先しやすいタイプ。踏み込みすぎない距離感や、役割の奥にある自分を見てほしい気持ちが近いです。"},
+  kyanite:{name:"カイヤナイト",desc:"努力家で、周囲と比べて落ち込みやすい一方、本当は頑張っていることを認めてほしいタイプ。共感と励ましの両方を大切にします。"},
+  turquoise:{name:"ターコイズ",desc:"感情をそのまま見せるより、分析や理屈で整理しようとするタイプ。距離感や一貫性を重視し、深く踏み込まれることには慎重です。"},
+  coral:{name:"コーラル",desc:"感情に敏感で、裏表のないやり取りを重視するタイプ。人の気持ちに強く影響されやすく、率直さと共感を大切にします。"},
+  quartz:{name:"クォーツ",desc:"退屈を嫌い、面白さや刺激を重視するタイプ。正論で縛られるより、違いを笑って流せるくらいの軽さがあります。"},
+  charoite:{name:"チャロアイト",desc:"つながりを強く求め、見捨てられることに弱いタイプ。近い距離や長い時間の共有を特別なものとして感じやすいです。"},
+  peridot:{name:"ペリドット",desc:"感情に素直で、相手を支えたり世話を焼いたりするタイプ。慰めるだけでなく、現実へ戻る手助けも大切にします。"},
+  tourmaline:{name:"トルマリン",desc:"理屈や価値、対話を重視し、必要な時だけしっかり関わりたいタイプ。感情よりもまず現実的な整理を優先しやすいです。"},
+  adularia:{name:"アデュレリア",desc:"好きな世界や習慣を大切にし、近い相手には肯定や導きを求めるタイプ。現状維持や穏やかな空間へのこだわりが強めです。"},
+  cornelpin:{name:"コーネルピン",desc:"普段は穏やかで事なかれ主義ですが、内側には刺激を楽しむ面もあるタイプ。誠実さと適度な距離を大切にします。"}
+};
+
+const similarityMaps = [
+  [
+    {kyanite:3,coral:3,charoite:2},
+    {turquoise:3,tourmaline:3,peridot:2},
+    {adularia:3,peridot:2,charoite:2},
+    {quartz:3,cornelpin:2},
+    {orange:4}
+  ],
+  [
+    {coral:3,kyanite:2,charoite:2},
+    {cornelpin:2,orange:2,tourmaline:1},
+    {peridot:4,turquoise:2,tourmaline:2},
+    {quartz:3,charoite:1},
+    {quartz:3,orange:1}
+  ],
+  [
+    {peridot:3,kyanite:3,coral:2},
+    {turquoise:4,tourmaline:4},
+    {cornelpin:3,adularia:2,charoite:2},
+    {quartz:4},
+    {orange:4}
+  ],
+  [
+    {charoite:4,adularia:3},
+    {turquoise:3,peridot:2,kyanite:2},
+    {tourmaline:4,cornelpin:3,coral:2},
+    {quartz:4},
+    {orange:3}
+  ],
+  [
+    {kyanite:3,adularia:2,charoite:2},
+    {turquoise:3,coral:3,cornelpin:3,peridot:2},
+    {tourmaline:4},
+    {quartz:4,cornelpin:2},
+    {charoite:4},
+    {orange:3}
+  ],
+  [
+    {coral:3,peridot:3,kyanite:2},
+    {turquoise:4,orange:2},
+    {tourmaline:4,turquoise:2},
+    {charoite:4},
+    {adularia:4},
+    {quartz:4},
+    {cornelpin:4,kyanite:1}
+  ],
+  [
+    {orange:2,coral:2,cornelpin:2},
+    {turquoise:4,kyanite:3},
+    {adularia:4,charoite:3,peridot:2},
+    {peridot:4},
+    {tourmaline:4,coral:1},
+    {quartz:4,cornelpin:1}
+  ],
+  [
+    {kyanite:4,charoite:1},
+    {turquoise:4,peridot:3},
+    {tourmaline:4,cornelpin:3},
+    {orange:4},
+    {adularia:4},
+    {quartz:4}
+  ],
+  [
+    {kyanite:4,peridot:2},
+    {peridot:4,turquoise:3,coral:2},
+    {tourmaline:4,cornelpin:3,orange:2},
+    {charoite:4},
+    {adularia:4},
+    {quartz:4}
+  ],
+  [
+    {cornelpin:3,tourmaline:3,peridot:3,orange:1},
+    {kyanite:4,coral:3,peridot:2},
+    {turquoise:4},
+    {charoite:3,adularia:4},
+    {quartz:4,cornelpin:2}
+  ],
+  [
+    {coral:3,peridot:3,cornelpin:2},
+    {orange:3,peridot:2},
+    {coral:3,cornelpin:3,turquoise:1},
+    {kyanite:3,adularia:3},
+    {turquoise:3,tourmaline:3}
+  ],
+  [
+    {orange:4,turquoise:2},
+    {kyanite:4},
+    {coral:4},
+    {quartz:3,charoite:3},
+    {peridot:4,charoite:3,adularia:2},
+    {tourmaline:4},
+    {adularia:4},
+    {cornelpin:4,quartz:1}
+  ]
+];
+
+function addSimilarityPoints(choiceIndex, questionIndex){
+  const pts = similarityMaps[questionIndex]?.[choiceIndex] || {};
+  Object.entries(pts).forEach(([k,v])=>similarityScores[k]+=v);
+}
+
+const questions = [
+ {q:"あなたが落ち込んだとき、いちばん嬉しいのは？", a:[
+  ["時間をかけて話を聴き、気持ちに寄り添ってくれる",{kyanite:3,coral:3,cornelpin:2}],
+  ["現実的な方法や準備を一緒に考えてくれる",{turquoise:3,tourmaline:3,peridot:2,coral:1}],
+  ["料理やお菓子、何気ない会話でそっと支えてくれる",{charoite:3,peridot:3,adularia:3,orange:2}],
+  ["冗談や面白い話で笑わせてくれる",{quartz:3,tourmaline:2,charoite:1}],
+  ["その時の自分が望むやり方に合わせてくれる",{orange:4}]
+ ]},
+ {q:"反対に、大切な相手が落ち込んでいたらどうしたい？", a:[
+  ["共感しながら、落ち着くまでそばにいる",{kyanite:3,charoite:3,adularia:3,turquoise:1}],
+  ["いったん一人にして、あとで普通に話しかける",{orange:3,coral:4,cornelpin:3}],
+  ["慰めたあと、現実に戻れるよう手伝う",{peridot:4,tourmaline:3,turquoise:2}],
+  ["面白い話をして、少し笑えるようにする",{tourmaline:3,charoite:2,quartz:1}],
+  ["重く扱いすぎず、普段通りに接する",{quartz:4,orange:1}]
+ ]},
+ {q:"もし二人で喧嘩したら、理想の仲直りは？", a:[
+  ["気持ちを言葉にして、分かるまで話し合う",{kyanite:3,peridot:3,coral:2}],
+  ["原因を整理して、筋道立てて解決する",{turquoise:4,tourmaline:4}],
+  ["少し距離を置き、落ち着いてから戻る",{coral:3,adularia:3,charoite:2,cornelpin:3}],
+  ["相手の怒りも含めて笑いに変えられたらいい",{quartz:4}],
+  ["相手が望む仲直りの形に合わせたい",{orange:4}]
+ ]},
+ {q:"心地いい距離感にいちばん近いのは？", a:[
+  ["かなり近い。一緒に何かをする時間が多い方がいい",{charoite:4,adularia:4,kyanite:1}],
+  ["適度。そばにいても別々のことをしていられる",{orange:3,turquoise:3,kyanite:2,peridot:2,cornelpin:2}],
+  ["必要な時だけしっかり関わり、それ以外は自由",{tourmaline:4,coral:3,cornelpin:3}],
+  ["面白い相手なら、かなり近くで見ていたい",{quartz:4}],
+  ["相手に合わせて変わっても構わない",{orange:3}]
+ ]},
+ {q:"相手にいちばん求めたいものは？", a:[
+  ["優しさと、自分をよく見たうえでの導き",{kyanite:4,adularia:3}],
+  ["言動に筋が通っていて、嘘や裏表が少ないこと",{turquoise:3,coral:4,cornelpin:3,peridot:2}],
+  ["何かに秀でていて、尊敬できること",{tourmaline:4,adularia:2}],
+  ["一緒にいて退屈しないこと",{quartz:4,cornelpin:2}],
+  ["何があっても見捨てないこと",{charoite:4}],
+  ["こちらの希望を汲んで、柔軟に合わせてくれること",{orange:4}]
+ ]},
+ {q:"次のうち、相手にされると一番つらいのは？", a:[
+  ["人を傷つけたり、尊厳を踏みにじったりする",{coral:4,peridot:4,kyanite:3}],
+  ["心の奥へ無理に踏み込まれる",{turquoise:4,orange:3}],
+  ["理屈が通じず、行動の意図がまったく分からない",{tourmaline:4,turquoise:3}],
+  ["見捨てられる、突き放される",{charoite:4}],
+  ["自分の大切な世界や空気を壊される",{adularia:4}],
+  ["分かりきった正論で説教される",{quartz:4}],
+  ["自分の価値を低く見積もられる、誰かと重ねられる",{cornelpin:4,kyanite:1}]
+ ]},
+ {q:"二人で過ごす休日なら、どれが理想？", a:[
+  ["穏やかに会話しつつ、お互い好きなことをする",{orange:3,coral:3,cornelpin:2}],
+  ["並んで勉強したり、本を読んだりする",{turquoise:4,kyanite:3}],
+  ["料理やお菓子作りなど、一緒に手を動かす",{adularia:4,charoite:3,peridot:2}],
+  ["星を見たり、景色を眺めたりして時間を共有する",{peridot:4,cornelpin:2}],
+  ["じっくり会話や議論をして、考えを交換する",{tourmaline:4,coral:1}],
+  ["予想外の出来事や相手の反応を面白がっていたい",{quartz:4,cornelpin:1}]
+ ]},
+ {q:"あなたが新しいことに挑戦するとき、相手にしてほしいのは？", a:[
+  ["気持ちに寄り添って、思い切り背中を押してほしい",{kyanite:4,charoite:1}],
+  ["効率のいい方法を考えたり、準備を手伝ってほしい",{turquoise:4,peridot:4,coral:2}],
+  ["必要な時だけ支援して、基本は見守ってほしい",{tourmaline:4,cornelpin:3}],
+  ["自分が望んだ通りの応援をしてほしい",{orange:4}],
+  ["お菓子や小さな贈り物で応援してほしい",{adularia:4}],
+  ["ちょっと小馬鹿にされるくらいの方が燃える",{quartz:4}]
+ ]},
+ {q:"相手が新しいことに挑戦するとき、あなたなら？", a:[
+  ["背中を押す。場合によっては自分も一緒に挑戦する",{kyanite:4,peridot:2}],
+  ["具体的な準備や手順を一緒に考える",{turquoise:3,peridot:4,coral:3}],
+  ["求められた分だけ助け、あとは本人に任せる",{orange:3,tourmaline:4,cornelpin:3}],
+  ["応援はするけれど、自分との時間も大切にしてほしい",{charoite:4}],
+  ["何か作ったり差し入れたりして応援する",{adularia:4,peridot:1}],
+  ["少し茶化しながら見物する",{quartz:4}]
+ ]},
+ {q:"相手と価値観が違ったとき、あなたは？", a:[
+  ["違っていても受け入れる。無理に正そうとは思わない",{tourmaline:4,peridot:3,cornelpin:3,orange:2}],
+  ["自分の考えを伝え、相手の考えも理解しようとする",{kyanite:4,coral:3,peridot:2}],
+  ["分析して理解はする。でも相容れなければ静かに離れる",{turquoise:4}],
+  ["かなり嫌。無理に付き合わず距離を置く",{charoite:3,adularia:4}],
+  ["『そういうこともある』と笑って流す",{quartz:4,cornelpin:1}]
+ ]},
+ {q:"相手がいつもあなたの希望に合わせてくれていると気づいたら？", a:[
+  ["『あなた自身はどうしたい？』と聞いてみる",{orange:5,turquoise:2}],
+  ["ありがたく受け取るけれど、要求しすぎないようにする",{orange:3,peridot:2}],
+  ["自分の意見をちゃんと言ってほしいと思う",{coral:3,cornelpin:3,peridot:3}],
+  ["合わせてもらうより、必要な時には導いてほしい",{kyanite:3,adularia:3}],
+  ["なぜそう動くのか、まず一貫性や意図を見極める",{turquoise:3,tourmaline:3}]
+ ]},
+ {q:"『特別な相手』になるうえで、いちばん惹かれる関係は？", a:[
+  ["表向きの優しさや役割の奥にいる本人まで知る",{orange:4,turquoise:3}],
+  ["人に見せない努力を見つけて、ちゃんと認める",{kyanite:4}],
+  ["裏表なく意見を言い合い、一緒に何かを頑張る",{coral:4}],
+  ["難しい相手でも、長い時間を一緒に過ごして関係を作る",{quartz:4,charoite:3}],
+  ["二人だけの特別な時間や習慣を積み重ねる",{peridot:4,charoite:3,adularia:2}],
+  ["相手が守りたいものを、自分も大切にする",{tourmaline:4}],
+  ["相手を肯定し、必要な時には率いてあげる",{adularia:4}],
+  ["普段は隠れている刺激好きな一面まで面白がる",{cornelpin:4,quartz:1}]
+ ]}
+];
+
+let i=0, scores={}, similarityScores={};
+Object.keys(chars).forEach(k=>{scores[k]=0; similarityScores[k]=0;});
+
+function render(){
+ const p=document.getElementById("progress");
+ p.innerHTML=questions.map((_,idx)=>`<span class="${idx<=i?'on':''}"></span>`).join("");
+ document.getElementById("qnum").textContent=`QUESTION ${i+1} / ${questions.length}`;
+ document.getElementById("question").textContent=questions[i].q;
+ const box=document.getElementById("choices"); box.innerHTML="";
+ questions[i].a.forEach(([label,pts], choiceIndex)=>{
+  const b=document.createElement("button");
+  b.className="choice";
+  b.type="button";
+  b.textContent=label;
+  b.addEventListener("click",()=>choose(pts, choiceIndex));
+  box.appendChild(b);
+ });
+}
+function choose(pts, choiceIndex){
+ Object.entries(pts).forEach(([k,v])=>scores[k]+=v);
+ addSimilarityPoints(choiceIndex, i);
+ i++;
+ if(i<questions.length) render(); else summon();
+}
+function summon(){
+ document.getElementById("quiz").classList.add("hidden");
+ document.getElementById("summoning").classList.remove("hidden");
+ setTimeout(showResult,1700);
+}
+function showResult(){
+ const max=Math.max(...Object.values(scores));
+ const top=Object.keys(scores).filter(k=>scores[k]===max);
+ const key=top[Math.floor(Math.random()*top.length)];
+ const c=chars[key];
+ document.getElementById("summoning").classList.add("hidden");
+ document.getElementById("result").classList.remove("hidden");
+
+ const card=document.getElementById("resultCard");
+ card.style.setProperty("--c1",c.c1);
+ card.style.setProperty("--c2",c.c2);
+
+ document.getElementById("region").textContent=c.region;
+ document.getElementById("name").textContent=c.name;
+ document.getElementById("epithet").textContent=c.epithet;
+
+ const pct=Math.min(99,72+Math.round(max*1.15));
+ document.getElementById("score").textContent=pct+"%";
+ document.getElementById("desc").textContent=c.desc;
+
+ const sorted=Object.entries(scores)
+   .sort((a,b)=>b[1]-a[1])
+   .slice(0,3)
+   .map(([k])=>chars[k].name);
+
+ document.getElementById("reason").textContent=
+   `回答全体から見ると、相性候補は「${sorted.join("・")}」。その中でも、あなたが求める関係と、相手に返せる関わり方の両方が最も噛み合ったのは ${c.name} です。`;
+
+ const simMax=Math.max(...Object.values(similarityScores));
+ const simTop=Object.keys(similarityScores).filter(k=>similarityScores[k]===simMax);
+ const simKey=simTop[Math.floor(Math.random()*simTop.length)];
+ const sim=similarityProfiles[simKey];
+ document.getElementById("similarName").textContent=sim.name;
+ document.getElementById("similarDesc").textContent=sim.desc;
+
+ window.currentResult=`あなたと相性のいいキャラは【${c.name}】！ 相性 ${pct}% — ${c.epithet}
+貴方と似ているキャラは【${sim.name}】`;
+}
+function restart(){
+ i=0;
+ scores={};
+ similarityScores={};
+ Object.keys(chars).forEach(k=>{scores[k]=0; similarityScores[k]=0;});
+
+ document.getElementById("result").classList.add("hidden");
+ document.getElementById("summoning").classList.add("hidden");
+ document.getElementById("quiz").classList.remove("hidden");
+
+ document.getElementById("region").textContent="";
+ document.getElementById("name").textContent="";
+ document.getElementById("epithet").textContent="";
+ document.getElementById("score").textContent="";
+ document.getElementById("desc").textContent="";
+ document.getElementById("reason").textContent="";
+ document.getElementById("similarName").textContent="";
+ document.getElementById("similarDesc").textContent="";
+ window.currentResult="";
+
+ render();
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+async function copyResult(){
+ const value=window.currentResult||"";
+ if(!value) return;
+ try{
+   if(navigator.clipboard && window.isSecureContext){
+     await navigator.clipboard.writeText(value);
+   }else{
+     const ta=document.createElement("textarea");
+     ta.value=value;
+     ta.setAttribute("readonly","");
+     ta.style.position="fixed";
+     ta.style.opacity="0";
+     document.body.appendChild(ta);
+     ta.select();
+     document.execCommand("copy");
+     document.body.removeChild(ta);
+   }
+   alert("結果をコピーしました！");
+ }catch(e){
+   window.prompt("コピーしてください：", value);
+ }
+}
+document.addEventListener("DOMContentLoaded",()=>{
+ const restartBtn=document.getElementById("restartBtn");
+ const copyBtn=document.getElementById("copyBtn");
+ if(restartBtn) restartBtn.addEventListener("click", restart);
+ if(copyBtn) copyBtn.addEventListener("click", copyResult);
+ render();
+});
+</script>
+</body>
+</html>
